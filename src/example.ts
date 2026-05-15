@@ -6,13 +6,13 @@ import {
   map,
   chain,
   local,
-  compose,
   ap,
   chainRight,
   chainLeft,
   prop,
   Do,
   tap,
+  pipe,
 } from './index';
 
 interface Logger {
@@ -44,55 +44,69 @@ const isBetaEnabled = asks((env: Env) => env.config.features.enableBeta);
 
 const logMessage =
   (msg: string): Reader<Logger, void> =>
-  (l: Logger) =>
-    l.log(msg);
+    (l: Logger) =>
+      l.log(msg);
 
-const logWithEnv = (msg: string): Reader<Env, void> => local(getLogger, logMessage(msg));
+const logWithEnv = (msg: string): Reader<Env, void> => pipe(logMessage(msg), local(getLogger));
 
-const getGreeting = chain(isBetaEnabled, (enabled) =>
-  enabled ? of('Welcome to the Beta experience!') : of('Welcome back!'),
+const getGreeting = pipe(
+  isBetaEnabled,
+  chain((enabled) => (enabled ? of('Welcome to the Beta experience!') : of('Welcome back!'))),
 );
 
 const authorize = (requiredRole: 'admin' | 'user'): Reader<Env, boolean> =>
   asks((env) => env.currentUser?.role === requiredRole);
 
-const debugEnv = map(ask<Env>(), (env) => `Debug Info: version ${env.config.version}`);
-
-const getStatusReport = ap(
-  of((ver: string) => (ep: string) => `System ${ver} connected to ${ep}`),
-  asks((e: Env) => e.config.version),
+const debugEnv = pipe(
+  ask<Env>(),
+  map((env) => `Debug Info: version ${env.config.version}`),
 );
-const fullStatus = ap(getStatusReport, getApiEndpoint);
+
+const getStatusReport = pipe(
+  of((ver: string) => (ep: string) => `System ${ver} connected to ${ep}`),
+  ap(asks((e: Env) => e.config.version)),
+);
+const fullStatus = pipe(getStatusReport, ap(getApiEndpoint));
 
 const processUserTask = (taskId: string) =>
-  chain(Do<Env>(), () =>
-    chain(authorize('admin'), (isAdmin) => {
-      if (!isAdmin) {
-        return chainRight(
-          logWithEnv(`Unauthorized access attempt on task ${taskId}`),
-          of('Access Denied'),
-        );
-      }
-
-      return compose(
-        tap<Env, unknown>((_, env) => env.logger.log(`Logging via tap for task ${taskId}`))(
-          logWithEnv(`Processing admin task: ${taskId}`),
-        ),
-        () =>
-          chain(getGreeting, (greeting) =>
-            chainRight(
-              logWithEnv(`Greeting sent: ${greeting}`),
-              chainLeft(
-                map(
-                  getApiEndpoint,
-                  (endpoint) => `Task ${taskId} processed via ${endpoint} (${greeting})`,
+  pipe(
+    Do<Env>(),
+    chain(() =>
+      pipe(
+        authorize('admin'),
+        chain((isAdmin) =>
+          !isAdmin
+            ? pipe(
+              logWithEnv(`Unauthorized access attempt on task ${taskId}`),
+              chainRight(of('Access Denied')),
+            )
+            : pipe(
+              logWithEnv(`Processing admin task: ${taskId}`),
+              tap<Env, unknown>((_, env) => env.logger.log(`Logging via tap for task ${taskId}`)),
+              chain(() =>
+                pipe(
+                  getGreeting,
+                  chain((greeting) =>
+                    pipe(
+                      logWithEnv(`Greeting sent: ${greeting}`),
+                      chainRight(
+                        pipe(
+                          getApiEndpoint,
+                          map(
+                            (endpoint) =>
+                              `Task ${taskId} processed via ${endpoint} (${greeting})`,
+                          ),
+                          chainLeft(logWithEnv('Task processing completed successfully')),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                logWithEnv('Task processing completed successfully'),
               ),
             ),
-          ),
-      );
-    }),
+        ),
+      ),
+    ),
   );
 
 const baseEnv = {
