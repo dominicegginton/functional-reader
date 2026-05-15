@@ -12,7 +12,11 @@ A purely functional, dependency-free dependency injection library for TypeScript
 ## Install
 
 ```bash
+# Install the latest version from GitHub
 npm install github:dominicegginton/functional-reader
+
+# Or install a specific version/tag
+npm install github:dominicegginton/functional-reader#v1.0.0
 ```
 
 ## Documentation
