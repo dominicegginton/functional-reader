@@ -70,6 +70,7 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 - `asks<Env, A>(selector: (env: Env) => A)`: Creates a Reader that selects a part of the environment.
 - `asksReader<Env, A>(f: (env: Env) => Reader<Env, A>)`: Creates a Reader that selects a part of the environment and returns a new Reader.
 - `prop<Env, K extends keyof Env>(key: K)`: Creates a Reader that extracts a specific property from the environment.
+- `pick<Env, K extends keyof Env>(keys: readonly K[])`: Creates a Reader that selects multiple properties from the environment.
 
 ### Transformation & Composition
 
@@ -92,7 +93,9 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 - `sequence<Env, A>(readers: Array<Reader<Env, A>>)`: Combines an array of Readers into one that returns an array of results.
 - `traverse<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Maps over an array of values using a function that returns a Reader.
 - `struct<Env, S>(readers: S)`: Combines an object of Readers into one that returns an object of results.
+- `zip<Env, A, B>(rb: Reader<Env, B>)`: Combines two Readers into a single Reader that returns a tuple of their results.
 - `iif<Env, A>(predicate: (env: Env) => boolean, onTrue: Reader<Env, A>, onFalse: Reader<Env, A>)`: Conditionally chooses between two Readers based on the environment.
+- `alt<Env, A, B>(secondary: Reader<Env, B>)`: Returns the result of the first Reader if it is not null or undefined, otherwise returns the result of the second Reader.
 
 ### Do-Notation
 
