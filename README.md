@@ -89,6 +89,7 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 
 - `sequence<Env, A>(readers: Array<Reader<Env, A>>)`: Combines an array of Readers into one that returns an array of results.
 - `struct<Env, S>(readers: S)`: Combines an object of Readers into one that returns an object of results.
+- `iif<Env, A>(predicate: (env: Env) => boolean, onTrue: Reader<Env, A>, onFalse: Reader<Env, A>)`: Conditionally chooses between two Readers based on the environment.
 
 ### Do-Notation
 
