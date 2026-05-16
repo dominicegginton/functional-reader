@@ -10,6 +10,41 @@ A purely functional, dependency-free dependency injection library for TypeScript
 - **Composable**: Utilities for mapping, chaining, and adapting environments.
 - **Curried**: All functions are fully curried for maximum flexibility.
 
+## Comparison with Other Libraries
+
+While many libraries offer functional programming and dependency management in TypeScript, **functional-reader** focuses on being a lightweight, specialized tool.
+
+| Feature / Goal                                 | functional-reader        | fp-ts (Reader)           | lodash/fp                      |
+|------------------------------------------------|-------------------------|--------------------------|---------------------------------|
+| Reader Monad / Dependency Injection            | Core feature            | Included module          | Not available                  |
+| Zero runtime dependencies                      | Yes                    | No (requires fp-ts)      | No (lodash dependency)          |
+| TypeScript support & inference                 | Excellent               | Excellent                | Partial (not Reader-aware)      |
+| Lightweight / Minimal bundle                   | Yes                    | No (fp-ts is large)      | No (lodash is large)            |
+| API Simplicity                                | Minimal, approachable   | Broader/complex          | Simple, but not monadic         |
+| Curried / Point-Free APIs                     | Yes                     | Yes                      | Partial                         |
+| Explicit error handling (neverthrow compatible)| Yes                     | Yes (with effort)        | No                              |
+| Do-notation & record chaining helpers          | Included                | Included                 | No                              |
+| Pure FP without typeclass bloat                | Yes                     | No (full typeclass)      | Yes (pure, but not Reader)      |
+
+### Why functional-reader?
+- **Focused**: A small, dependency-free implementation of the Reader monad.
+- **TypeScript-native**: Designed for first-class type inference and autocompletion.
+- **Lightweight**: Zero dependencies and minimal bundle size overhead.
+- **Approachable**: A readable API that is easy to learn and integrate.
+- **Interoperable**: Designed to play well with other modern libraries like `neverthrow`.
+
+## Compatibility & Interoperability
+
+**functional-reader** is unopinionated, making it easy to integrate into existing TypeScript projects:
+
+| Interop Scenario                            | Support Description                                                           |
+|---------------------------------------------|------------------------------------------------------------------------------|
+| **neverthrow**                              | Returns or operates on `Result<T, E>` out-of-the-box.                         |
+| **fp-ts**                                   | Compatible API surface; easily migrated or combined.                          |
+| **RxJS / Promises**                         | Readers can be evaluated inside observables or async flows.                   |
+| **Legacy Code**                             | Since a Reader is just `(env) => value`, it plugs in directly everywhere.     |
+| **Standard Utilities**                      | Works seamlessly with standard JS utilities (lodash, ramda, etc.).            |
+
 ## Install
 
 > **Note**: functional-reader is distributed directly via this repository to emphasize transparency, autonomy, and source engagement over reliance on third-party registries. This approach allows users to review, audit, and tailor the library to their needs, while avoiding potential risks or restrictions imposed by centralized package platforms.
