@@ -1,10 +1,15 @@
-import { Do, bind, of, pipe } from '../src';
+import { Do, bind, bindTo, of, pipe } from '../../src';
+
+/**
+ * `Do`, `bind`, and `bindTo` provide a way to chain Readers
+ * that collect their results into an object.
+ */
 
 const reader = pipe(
   Do(),
   bind('a', () => of(1)),
   bind('b', ({ a }) => of(a + 1)),
-  bind('c', ({ a, b }) => of(a + b)),
+  bindTo('c')(of(3)),
 );
 
 console.log(reader({})); // { a: 1, b: 2, c: 3 }
