@@ -46,8 +46,8 @@ interface Env {
 const getLogger = prop<Env, 'logger'>('logger');
 const logMessage =
   (msg: string): Reader<Logger, void> =>
-    (l) =>
-      l.log(msg);
+  (l) =>
+    l.log(msg);
 const logWithEnv = (msg: string): Reader<Env, void> => pipe(logMessage(msg), local(getLogger));
 
 const formatVersion = flow(
@@ -65,11 +65,14 @@ const getDebugInfo = pipe(
   map((env) => `[DEBUG] Env: version=${env.config.version} user=${env.currentUser?.id ?? 'none'}`),
 );
 
-const getSystemStatus = struct<Env, {
-  readonly endpoint: Reader<Env, string>;
-  readonly version: Reader<Env, string>;
-  readonly checks: Reader<Env, ReadonlyArray<string>>;
-}>({
+const getSystemStatus = struct<
+  Env,
+  {
+    readonly endpoint: Reader<Env, string>;
+    readonly version: Reader<Env, string>;
+    readonly checks: Reader<Env, readonly string[]>;
+  }
+>({
   endpoint: getApiEndpoint,
   version: asks((env: Env) => formatVersion(env.config.version)),
   checks: sequence([of('db:ok'), of('cache:ok')]),
@@ -83,28 +86,28 @@ const processUserTask = (taskId: string): Reader<Env, unknown> =>
       ({ isAdmin }) =>
         (!isAdmin
           ? pipe(
-            logWithEnv(`Unauthorized access attempt on task ${taskId}`),
-            chainRight(of('Access Denied')),
-          )
+              logWithEnv(`Unauthorized access attempt on task ${taskId}`),
+              chainRight(of('Access Denied')),
+            )
           : pipe(
-            Do<Env>(),
-            bind('status', () => getSystemStatus),
-            bind('user', () => asks((env: Env) => env.currentUser)),
-            tap(({ user }) => console.log(`[DEBUG] Processing for user ${user?.id}`)),
-            map(
-              ({ status }) =>
-                `Task ${taskId} processed at ${status.endpoint} (${status.version})`,
-            ),
-            chainLeft(logWithEnv(`Task ${taskId} successful`)),
-            bindTo('response'),
-            (nested) => flatten(of(nested)),
-            compose((res: { readonly response: string }) =>
-              pipe(
-                of((r: typeof res) => ({ ...r, timestamp: Date.now() })),
-                ap(of(res)),
+              Do<Env>(),
+              bind('status', () => getSystemStatus),
+              bind('user', () => asks((env: Env) => env.currentUser)),
+              tap(({ user }) => console.log(`[DEBUG] Processing for user ${user?.id}`)),
+              map(
+                ({ status }) =>
+                  `Task ${taskId} processed at ${status.endpoint} (${status.version})`,
               ),
-            ),
-          )) as Reader<Env, unknown>,
+              chainLeft(logWithEnv(`Task ${taskId} successful`)),
+              bindTo('response'),
+              (nested) => flatten(of(nested)),
+              compose((res: { readonly response: string }) =>
+                pipe(
+                  of((r: typeof res) => ({ ...r, timestamp: Date.now() })),
+                  ap(of(res)),
+                ),
+              ),
+            )) as Reader<Env, unknown>,
     ),
   );
 
