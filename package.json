@@ -11,12 +11,13 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"examples/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\"",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "example": "ts-node src/example.ts"
+    "example:basic": "npx jiti examples/basic.ts",
+    "example:full": "npx jiti examples/full-example.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
