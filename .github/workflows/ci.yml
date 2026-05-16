@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.actor == github.repository_owner
     steps:
@@ -22,3 +22,19 @@ jobs:
         run: nix develop --command npm run lint
       - name: Test
         run: nix develop --command npm test
+
+  build:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.actor == github.repository_owner
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Build
+        run: nix build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: functional-reader
+          path: result
