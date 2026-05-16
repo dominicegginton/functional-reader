@@ -66,6 +66,7 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 ### Construction
 
 - `of<Env, A>(a: A)`: Creates a Reader that always returns `a`.
+- `defer<Env, A>(f: () => Reader<Env, A>)`: Creates a Reader that is lazily initialized when it is called.
 - `ask<Env>()`: Creates a Reader that returns the entire environment.
 - `asks<Env, A>(selector: (env: Env) => A)`: Creates a Reader that selects a part of the environment.
 - `asksReader<Env, A>(f: (env: Env) => Reader<Env, A>)`: Creates a Reader that selects a part of the environment and returns a new Reader.
@@ -75,6 +76,7 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 ### Transformation & Composition
 
 - `map<A, B>(f: (a: A) => B)`: Transforms the result of a Reader.
+- `mapTo<B>(value: B)`: Maps the result of a Reader to a constant value.
 - `chain<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Sequences two Readers where the second depends on the first.
 - `chainFirst<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Sequences two Readers where the second depends on the first, but returns the result of the first.
 - `flatten<Env, A>(mma: Reader<Env, Reader<Env, A>>)`: Collapses a nested Reader into a single Reader.
@@ -95,6 +97,7 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 - `struct<Env, S>(readers: S)`: Combines an object of Readers into one that returns an object of results.
 - `zip<Env, A, B>(rb: Reader<Env, B>)`: Combines two Readers into a single Reader that returns a tuple of their results.
 - `iif<Env, A>(predicate: (env: Env) => boolean, onTrue: Reader<Env, A>, onFalse: Reader<Env, A>)`: Conditionally chooses between two Readers based on the environment.
+- `when<Env, A>(predicate: (env: Env) => boolean, reader: Reader<Env, A>)`: Conditionally executes a Reader if the predicate is true.
 - `alt<Env, A, B>(secondary: Reader<Env, B>)`: Returns the result of the first Reader if it is not null or undefined, otherwise returns the result of the second Reader.
 
 ### Do-Notation
