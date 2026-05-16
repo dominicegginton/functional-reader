@@ -59,28 +59,45 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 
 ## Documentation
 
-```typescript
-type Reader<Env, Result> = (env: Env) => Result;
+### Core Types
 
-function pipe<A>(a: A, ...fns: Array<(x: unknown) => unknown>): unknown;
+- `Reader<Env, Result>`: A computation that requires an environment `Env` to produce a result `Result`.
 
-function of<Env, A>(a: A): Reader<Env, A>;
-function ask<Env>(): Reader<Env, Env>;
-function asks<Env, A>(selector: (env: Env) => A): Reader<Env, A>;
-function map<A, B>(f: (a: A) => B): <Env>(reader: Reader<Env, A>) => Reader<Env, B>;
-function chain<A, Env, B>(f: (a: A) => Reader<Env, B>): (reader: Reader<Env, A>) => Reader<Env, B>;
-function local<EnvOuter, EnvInner>(f: (outer: EnvOuter) => EnvInner): <A>(reader: Reader<EnvInner, A>) => Reader<EnvOuter, A>;
-function ap<Env, A>(fa: Reader<Env, A>): <B>(fab: Reader<Env, (a: A) => B>) => Reader<Env, B>;
-function chainRight<Env, B>(rb: Reader<Env, B>): <A>(ra: Reader<Env, A>) => Reader<Env, B>;
-function chainLeft<Env, B>(rb: Reader<Env, B>): <A>(ra: Reader<Env, A>) => Reader<Env, A>;
-function prop<Env, K extends keyof Env>(key: K): Reader<Env, Env[K]>;
-function Do<Env>(): Reader<Env, Record<string, never>>;
-function bindTo<K extends string>(key: K): <Env, A>(reader: Reader<Env, A>) => Reader<Env, { [P in K]: A }>;
-function bind<K extends string, A, EnvB, B>(key: K, f: (a: A) => Reader<EnvB, B>): <EnvA>(reader: Reader<EnvA, A>) => Reader<EnvA & EnvB, A & { [P in K]: B }>;
-function tap<Env, A>(sideEffect: (a: A, env: Env) => void): (reader: Reader<Env, A>) => Reader<Env, A>;
-function flow<A, B>(...fns: Array<Function>): (a: A) => B;
-function asksReader<Env, A>(f: (env: Env) => Reader<Env, A>): Reader<Env, A>;
-function flatten<Env, A>(mma: Reader<Env, Reader<Env, A>>): Reader<Env, A>;
-function sequence<Env, A>(readers: Array<Reader<Env, A>>): Reader<Env, Array<A>>;
-function struct<Env, S>(readers: S): Reader<Env, { [K in keyof S]: S[K] extends Reader<any, infer A> ? A : never }>;
-```
+### Construction
+
+- `of<Env, A>(a: A)`: Creates a Reader that always returns `a`.
+- `ask<Env>()`: Creates a Reader that returns the entire environment.
+- `asks<Env, A>(selector: (env: Env) => A)`: Creates a Reader that selects a part of the environment.
+- `asksReader<Env, A>(f: (env: Env) => Reader<Env, A>)`: Creates a Reader that selects a part of the environment and returns a new Reader.
+- `prop<Env, K extends keyof Env>(key: K)`: Creates a Reader that extracts a specific property from the environment.
+
+### Transformation & Composition
+
+- `map<A, B>(f: (a: A) => B)`: Transforms the result of a Reader.
+- `chain<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Sequences two Readers where the second depends on the first.
+- `flatten<Env, A>(mma: Reader<Env, Reader<Env, A>>)`: Collapses a nested Reader into a single Reader.
+- `local<EnvOuter, EnvInner>(f: (outer: EnvOuter) => EnvInner)`: Adapts a Reader to a different environment type.
+- `ap<Env, A>(fa: Reader<Env, A>)`: Applies a function contained within a Reader to a value in another Reader.
+
+### Sequencing & Side Effects
+
+- `chainRight<Env, B>(rb: Reader<Env, B>)`: Sequences two Readers and returns the result of the second.
+- `chainLeft<Env, B>(rb: Reader<Env, B>)`: Sequences two Readers and returns the result of the first.
+- `tap<Env, A>(sideEffect: (a: A, env: Env) => void)`: Performs a side effect without changing the Reader's result.
+
+### Combinators
+
+- `sequence<Env, A>(readers: Array<Reader<Env, A>>)`: Combines an array of Readers into one that returns an array of results.
+- `struct<Env, S>(readers: S)`: Combines an object of Readers into one that returns an object of results.
+
+### Do-Notation
+
+- `Do<Env>()`: Initializes a "Do" block for chainable record compositions.
+- `bindTo<K extends string>(key: K)`: Wraps a Reader's result into a record with a specified key.
+- `bind<K extends string, A, EnvB, B>(key: K, f: (a: A) => Reader<EnvB, B>)`: Binds the result of a Reader to a key in a "Do" block.
+
+### Functional Utilities
+
+- `pipe(a, ...fns)`: Pipes a value through a series of functions.
+- `flow(...fns)`: Composes multiple functions into a single function.
+
