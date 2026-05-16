@@ -12,6 +12,8 @@ A purely functional, dependency-free dependency injection library for TypeScript
 
 ## Install
 
+> **Note**: functional-reader is distributed directly via this repository to emphasize transparency, autonomy, and source engagement over reliance on third-party registries. This approach allows users to review, audit, and tailor the library to their needs, while avoiding potential risks or restrictions imposed by centralized package platforms.
+
 ```bash
 # Install the latest version from GitHub
 npm install github:dominicegginton/functional-reader
