@@ -15,11 +15,12 @@
     ]
   },
   "include": [
-    "src/**/*",
-    "examples/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "examples",
+    "src/**/*.test.ts"
   ]
 }
