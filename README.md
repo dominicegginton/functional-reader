@@ -75,8 +75,10 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 
 - `map<A, B>(f: (a: A) => B)`: Transforms the result of a Reader.
 - `chain<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Sequences two Readers where the second depends on the first.
+- `chainFirst<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Sequences two Readers where the second depends on the first, but returns the result of the first.
 - `flatten<Env, A>(mma: Reader<Env, Reader<Env, A>>)`: Collapses a nested Reader into a single Reader.
 - `local<EnvOuter, EnvInner>(f: (outer: EnvOuter) => EnvInner)`: Adapts a Reader to a different environment type.
+- `provide<Env>(env: Env)`: Provides an environment to a Reader, resulting in a Reader that requires no environment.
 - `ap<Env, A>(fa: Reader<Env, A>)`: Applies a function contained within a Reader to a value in another Reader.
 
 ### Sequencing & Side Effects
@@ -88,6 +90,7 @@ npm install github:dominicegginton/functional-reader#v1.0.0
 ### Combinators
 
 - `sequence<Env, A>(readers: Array<Reader<Env, A>>)`: Combines an array of Readers into one that returns an array of results.
+- `traverse<A, Env, B>(f: (a: A) => Reader<Env, B>)`: Maps over an array of values using a function that returns a Reader.
 - `struct<Env, S>(readers: S)`: Combines an object of Readers into one that returns an object of results.
 - `iif<Env, A>(predicate: (env: Env) => boolean, onTrue: Reader<Env, A>, onFalse: Reader<Env, A>)`: Conditionally chooses between two Readers based on the environment.
 

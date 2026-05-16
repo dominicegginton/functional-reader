@@ -1,4 +1,4 @@
-import { iif, of } from '../src';
+import { iif, of } from '../../src';
 
 interface Env {
   readonly isProduction: boolean;
