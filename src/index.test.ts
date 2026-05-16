@@ -126,4 +126,13 @@ describe('Reader', () => {
     });
     expect(reader({ val: 0 })).toEqual({ a: 1, b: 'foo' });
   });
+
+  test('iif', () => {
+    const onTrue = R.of<Env, string>('true');
+    const onFalse = R.of<Env, string>('false');
+    const reader = R.iif((env: Env) => env.val > 0, onTrue, onFalse);
+
+    expect(reader({ val: 1 })).toBe('true');
+    expect(reader({ val: -1 })).toBe('false');
+  });
 });
