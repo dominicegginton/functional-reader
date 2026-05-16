@@ -1,4 +1,31 @@
-import { pipe, Do, bind, asks, tap, of } from '../src';
+import {
+  pipe,
+  flow,
+  of,
+  ask,
+  asks,
+  asksReader,
+  flatten,
+  map,
+  chain,
+  local,
+  ap,
+  chainRight,
+  chainLeft,
+  prop,
+  Do,
+  bindTo,
+  bind,
+  tap,
+  sequence,
+  struct,
+  iif,
+  Reader,
+} from '../src';
+
+/**
+ * A comprehensive example demonstrating every utility in functional-reader.
+ */
 
 // --- Types ---
 
@@ -6,41 +33,123 @@ interface Logger {
   readonly log: (msg: string) => void;
 }
 
-interface Repository {
-  readonly save: (data: string) => Promise<void>;
-}
-
 interface Config {
-  readonly prefix: string;
+  readonly env: 'dev' | 'prod';
+  readonly version: string;
 }
 
-interface Env {
+interface Database {
+  readonly getUsers: () => Promise<readonly string[]>;
+}
+
+interface AppEnv {
   readonly logger: Logger;
-  readonly repo: Repository;
   readonly config: Config;
+  readonly db: Database;
 }
 
-// --- Logic ---
+// --- 1. Construction & Extraction ---
 
-const log = (msg: string) => asks((env: Env) => env.logger.log(`${env.config.prefix}: ${msg}`));
+const getLogger = prop<AppEnv, 'logger'>('logger');
+const getConfig = asks((env: AppEnv) => env.config);
+const getFullEnv = ask<AppEnv>();
 
-const saveData = (data: string) => asks((env: Env) => env.repo.save(data));
+// --- 2. Functional Utilities ---
 
-const processTask = (id: string) =>
+const formatMsg = flow(
+  (msg: string) => msg.trim(),
+  (msg: string) => `[APP] ${msg}`,
+);
+
+const log = (msg: string): Reader<AppEnv, void> =>
+  asksReader((env: AppEnv) => {
+    env.logger.log(formatMsg(msg));
+    return of(undefined);
+  });
+
+// --- 3. Advanced Sequencing & Branching ---
+
+const checkEnv = iif(
+  (env: AppEnv) => env.config.env === 'prod',
+  of('Production'),
+  of('Development'),
+);
+
+const fetchUsers = asks((env: AppEnv) => env.db.getUsers());
+
+// --- 4. Combinators ---
+
+const getSystemStats = struct({
+  version: pipe(
+    getConfig,
+    map((c) => c.version),
+  ),
+  mode: checkEnv,
+  checks: sequence([of('db:ok'), of('cache:ok')]),
+});
+
+// --- 5. The Main Workflow (Do-notation & Applicative) ---
+
+const processRequest = (requestId: string) =>
   pipe(
-    Do<Env>(),
-    tap(() => log(`Starting task ${id}`)),
-    bind('data', () => of(`Data for ${id}`)),
-    bind('result', ({ data }) => saveData(data)),
-    tap(({ data }) => log(`Finished task ${id} with data: ${data}`)),
+    Do<AppEnv>(),
+    // Use tap for side effects
+    tap((_, env) => log(`Starting request ${requestId}`)(env)),
+    // Use bind to collect results
+    bind('stats', () => getSystemStats),
+    // Use bindTo for simple wrapping
+    bind('id', () => bindTo('value')(of(requestId))),
+    // Use ask to get everything
+    bind('env', () => getFullEnv),
+    // Use fetchUsers
+    bind('users', () => fetchUsers),
+    // Use ap for applicative style
+    bind('message', ({ stats }) =>
+      pipe(
+        of((v: string) => `System is in ${v} mode (v${stats.version})`),
+        ap(of(stats.mode)),
+      ),
+    ),
+    // Use flatten to demonstrate collapsing
+    chain((state) => flatten(of(of(state)))),
+    // Use chainRight to move to the next operation ignoring previous result
+    chainRight(asks((env: AppEnv) => `Finished ${requestId} on ${env.config.env}`)),
+  );
+
+// --- 6. Environment Adaptation ---
+
+interface GlobalEnv {
+  readonly services: AppEnv;
+}
+
+const main = (reqId: string): Reader<GlobalEnv, string> =>
+  pipe(
+    processRequest(reqId),
+    // Use local to adapt the environment
+    local((global: Readonly<GlobalEnv>) => global.services),
+    // Satisfy the unused getLogger and use chainLeft
+    chainLeft(
+      pipe(
+        local((g: Readonly<GlobalEnv>) => g.services)(getLogger),
+        map(() => 'unused'),
+      ),
+    ),
   );
 
 // --- Execution ---
 
-const mockEnv: Env = {
-  logger: { log: (msg) => console.log(`[LOG] ${msg}`) },
-  repo: { save: (data) => Promise.resolve(console.log(`[REPO] Saved: ${data}`)) },
-  config: { prefix: 'APP' },
+const mockEnv: GlobalEnv = {
+  services: {
+    logger: { log: (msg) => console.log(msg) },
+    config: { env: 'dev', version: '2.1.0' },
+    db: { getUsers: () => Promise.resolve(['Alice', 'Bob']) },
+  },
 };
 
-processTask('123')(mockEnv);
+const run = async () => {
+  console.log('--- Starting Full Example ---');
+  const result = await main('req-123')(mockEnv);
+  console.log('Final Result:', result);
+};
+
+run().catch(console.error);
