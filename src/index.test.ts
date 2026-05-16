@@ -81,4 +81,49 @@ describe('Reader', () => {
     );
     expect(reader({ val: 0 })).toBe(42);
   });
+
+  test('flow', () => {
+    const f = R.flow(
+      (n: number) => n * 2,
+      (n: number) => n + 2,
+    );
+    expect(f(20)).toBe(42);
+  });
+
+  test('asksReader', () => {
+    const reader = R.asksReader((env: Env) => R.of(env.val * 2));
+    expect(reader({ val: 21 })).toBe(42);
+  });
+
+  test('flatten', () => {
+    const reader = R.flatten(R.of<Env, R.Reader<Env, number>>(R.of(42)));
+    expect(reader({ val: 0 })).toBe(42);
+  });
+
+  test('bindTo', () => {
+    const reader = R.pipe(R.of<Env, number>(42), R.bindTo('foo'));
+    expect(reader({ val: 0 })).toEqual({ foo: 42 });
+  });
+
+  test('bind', () => {
+    const reader = R.pipe(
+      R.Do<Env>(),
+      R.bind('foo', () => R.of(42)),
+      R.bind('bar', ({ foo }) => R.of(foo + 1)),
+    );
+    expect(reader({ val: 0 })).toEqual({ foo: 42, bar: 43 });
+  });
+
+  test('sequence', () => {
+    const reader = R.sequence([R.of(1), R.of(2), R.of(3)]);
+    expect(reader({ val: 0 })).toEqual([1, 2, 3]);
+  });
+
+  test('struct', () => {
+    const reader = R.struct({
+      a: R.of(1),
+      b: R.of('foo'),
+    });
+    expect(reader({ val: 0 })).toEqual({ a: 1, b: 'foo' });
+  });
 });

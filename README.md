@@ -38,5 +38,12 @@ function chainRight<Env, B>(rb: Reader<Env, B>): <A>(ra: Reader<Env, A>) => Read
 function chainLeft<Env, B>(rb: Reader<Env, B>): <A>(ra: Reader<Env, A>) => Reader<Env, A>;
 function prop<Env, K extends keyof Env>(key: K): Reader<Env, Env[K]>;
 function Do<Env>(): Reader<Env, Record<string, never>>;
+function bindTo<K extends string>(key: K): <Env, A>(reader: Reader<Env, A>) => Reader<Env, { [P in K]: A }>;
+function bind<K extends string, A, EnvB, B>(key: K, f: (a: A) => Reader<EnvB, B>): <EnvA>(reader: Reader<EnvA, A>) => Reader<EnvA & EnvB, A & { [P in K]: B }>;
 function tap<Env, A>(sideEffect: (a: A, env: Env) => void): (reader: Reader<Env, A>) => Reader<Env, A>;
+function flow<A, B>(...fns: Array<Function>): (a: A) => B;
+function asksReader<Env, A>(f: (env: Env) => Reader<Env, A>): Reader<Env, A>;
+function flatten<Env, A>(mma: Reader<Env, Reader<Env, A>>): Reader<Env, A>;
+function sequence<Env, A>(readers: Array<Reader<Env, A>>): Reader<Env, Array<A>>;
+function struct<Env, S>(readers: S): Reader<Env, { [K in keyof S]: S[K] extends Reader<any, infer A> ? A : never }>;
 ```
